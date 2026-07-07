@@ -1,10 +1,43 @@
 # mag10-monitor-aws
 
-Real-time market intelligence pipeline for MAG 10 equities, running on AWS.
+**A production-grade, real-time market intelligence pipeline and MLOps loop running on AWS — built end-to-end from ingestion to automated retraining.**
 
-Ingests live trade data via Finnhub WebSocket, runs four algorithmic signal detectors augmented by a SageMaker IsolationForest anomaly scorer, and surfaces results on a Streamlit dashboard backed by Redshift Serverless.
+Started as a project at [Harbour.Space](https://harbour.space/); rebuilt from the ground up as a real AWS deployment: live WebSocket ingestion, a medallion (bronze/silver/gold) data lake, four stateful anomaly detectors, a full SageMaker training → registry → endpoint loop, and a Streamlit dashboard — all running on two `t3.micro` EC2 instances with no GPU, using only the Finnhub free tier.
 
-> AWS port of [mag10-monitor](https://github.com) (GCP). Detection algorithms are identical; infrastructure, SDK calls, and ML pipeline are new.
+> Originally prototyped as [mag10-monitor](https://github.com) on GCP. This is a full rebuild on AWS: detection algorithms carried over conceptually, but infrastructure, SDK integration, and the entire ML pipeline (training, model registry, gated deployment, scheduled retraining) are new.
+
+---
+
+## Highlights
+
+- **End-to-end MLOps loop** — SageMaker Pipeline (processing → training → evaluation → conditional gate → registry) triggered automatically every weekday after market close via EventBridge Scheduler, with a manual-approval gate before any model reaches production.
+- **Real-time streaming architecture** — Finnhub WebSocket → Kinesis Data Streams fanning out to three independent consumers (bronze archive, feature engineering, live detection), processing trades for 10 equities in real time.
+- **Medallion data architecture** — Bronze (raw trades in S3) → Silver (detected signals in S3) → Gold (Redshift Serverless), each layer serving a distinct purpose (warm-start recovery, ML training data, dashboard queries).
+- **Cost-conscious infrastructure** — the entire ingestion + detection path runs on two `t3.micro` EC2 instances; no GPU instances, no paid data feed, ECS Fargate only for the dashboard.
+- **Infrastructure as code** — 11 Terraform modules covering VPC, EC2, Kinesis, S3, Lambda, Redshift, ECS, ECR, SageMaker, EventBridge Scheduler, and IAM.
+- **Secure by design** — no hardcoded credentials anywhere; all secrets resolved at runtime via AWS Secrets Manager, IAM instance profiles, and Lambda execution roles.
+
+---
+
+## Full MLOps Pipeline
+
+![Full MLOps Pipeline architecture diagram](docs/images/architecture.png)
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Ingestion | Finnhub WebSocket API, Python, EC2 (`t3.micro`) |
+| Streaming | Amazon Kinesis Data Streams, Kinesis Firehose |
+| Compute | AWS Lambda, ECS Fargate |
+| Storage | Amazon S3 (bronze/silver), Redshift Serverless (gold) |
+| ML / MLOps | Amazon SageMaker (Pipelines, Feature Store, Model Registry, Endpoints), scikit-learn (IsolationForest) |
+| Orchestration | Amazon EventBridge Scheduler |
+| Dashboard | Streamlit |
+| Infrastructure as Code | Terraform (11 modules) |
+| Package Management | [uv](https://docs.astral.sh/uv/) (per-service `pyproject.toml` + lockfile) |
 
 ---
 
