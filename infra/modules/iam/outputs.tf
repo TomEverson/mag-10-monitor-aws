@@ -1,0 +1,13 @@
+output "websocket_role_arn"               { value = aws_iam_role.websocket.arn }
+output "websocket_instance_profile_name"  { value = aws_iam_instance_profile.websocket.name }
+output "detection_role_arn"               { value = aws_iam_role.detection.arn }
+output "detection_instance_profile_name"  { value = aws_iam_instance_profile.detection.name }
+output "firehose_role_arn"                { value = aws_iam_role.firehose.arn }
+output "lambda_archive_role_arn"          { value = aws_iam_role.lambda_archive.arn }
+output "lambda_redshift_role_arn"         { value = aws_iam_role.lambda_redshift.arn }
+output "lambda_feature_role_arn"          { value = aws_iam_role.lambda_feature.arn }
+output "sagemaker_role_arn"               { value = aws_iam_role.sagemaker.arn }
+output "ecs_task_role_arn"                { value = aws_iam_role.ecs_task.arn }
+output "ecs_execution_role_arn"           { value = aws_iam_role.ecs_execution.arn }
+output "scheduler_role_arn"               { value = aws_iam_role.scheduler.arn }
+output "redshift_role_arn"                { value = aws_iam_role.redshift.arn }
